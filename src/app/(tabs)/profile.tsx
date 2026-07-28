@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
+import * as ImagePicker from 'expo-image-picker'
 import axios from 'axios'
 
 import api from '@/apis'
@@ -43,6 +45,7 @@ export default function ProfileScreen() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     fetchCurrentUser()
@@ -72,6 +75,31 @@ export default function ProfileScreen() {
     load()
   }
 
+  // Pick an image, push it to POST /uploads/image, attach it with PATCH /users/current.
+  const onChangeAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) return
+
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] })
+    if (picked.canceled || !picked.assets[0]) return
+
+    const asset = picked.assets[0]
+    setUploading(true)
+    try {
+      const res = await api.upload.uploadImage({
+        uri: asset.uri,
+        name: asset.fileName,
+        mimeType: asset.mimeType,
+      })
+      await api.user.updateCurrentUser({ avatar_url: res.data.data.url })
+      await fetchCurrentUser()
+    } catch {
+      Alert.alert('Upload failed', 'Could not upload that image.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const onLogout = async () => {
     await logout()
     router.replace('/login')
@@ -80,9 +108,16 @@ export default function ProfileScreen() {
   const header = (
     <View>
       <View style={styles.card}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user?.username?.[0]?.toUpperCase() ?? '?'}</Text>
-        </View>
+        {user?.avatar_url ? (
+          <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{user?.username?.[0]?.toUpperCase() ?? '?'}</Text>
+          </View>
+        )}
+        <Pressable style={styles.avatarButton} onPress={onChangeAvatar} disabled={uploading}>
+          <Text style={styles.avatarButtonText}>{uploading ? 'Uploading…' : 'Change photo'}</Text>
+        </Pressable>
         <Text style={styles.name}>
           {user ? `${user.first_name} ${user.last_name}` : 'Loading...'}
         </Text>
@@ -155,6 +190,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+  },
+  avatarButton: {
+    marginBottom: 12,
+  },
+  avatarButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   avatarText: {
     color: '#fff',

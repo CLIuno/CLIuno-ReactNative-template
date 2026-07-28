@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -23,6 +24,7 @@ const colors = {
 }
 
 interface UserRow {
+  avatar_url?: string | null
   id: string | number
   username: string
   email: string
@@ -82,9 +84,13 @@ export default function UsersScreen() {
       ListEmptyComponent={<Text style={styles.empty}>No users found</Text>}
       renderItem={({ item }) => (
         <Pressable style={styles.card} onPress={() => router.push(`/users/${String(item.id)}`)}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{item.username?.[0]?.toUpperCase() ?? '?'}</Text>
-          </View>
+          {item.avatar_url ? (
+            <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{item.username?.[0]?.toUpperCase() ?? '?'}</Text>
+            </View>
+          )}
           <View style={styles.cardBody}>
             <Text style={styles.cardTitle}>@{item.username}</Text>
             <Text style={styles.cardSubtitle}>{item.email}</Text>

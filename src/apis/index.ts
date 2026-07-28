@@ -3,6 +3,7 @@ import authApi from './auth-api'
 import todoApi from './todo-api'
 import followApi from './follow-api'
 import postApi from './post-api'
+import uploadApi from './upload-api'
 
 const api = {
   user: userApi,
@@ -10,6 +11,7 @@ const api = {
   todo: todoApi,
   follow: followApi,
   post: postApi,
+  upload: uploadApi,
 }
 
 export default api

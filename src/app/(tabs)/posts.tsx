@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
   View,
 } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
+import * as ImagePicker from 'expo-image-picker'
 import axios from 'axios'
 
 import api from '@/apis'
@@ -28,6 +30,7 @@ interface Post {
   id: string | number
   title: string
   content?: string | null
+  image_url?: string | null
   user?: { id: string | number; username?: string } | null
 }
 
@@ -44,6 +47,8 @@ export default function PostsScreen() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [creating, setCreating] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -68,6 +73,29 @@ export default function PostsScreen() {
     load()
   }
 
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) return
+
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] })
+    if (picked.canceled || !picked.assets[0]) return
+
+    const asset = picked.assets[0]
+    setUploading(true)
+    try {
+      const res = await api.upload.uploadImage({
+        uri: asset.uri,
+        name: asset.fileName,
+        mimeType: asset.mimeType,
+      })
+      setImageUrl(res.data.data.url)
+    } catch (err) {
+      Alert.alert('Error', errMsg(err))
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const createPost = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Error', 'Please enter a title and content')
@@ -75,9 +103,14 @@ export default function PostsScreen() {
     }
     setCreating(true)
     try {
-      await api.post.createPost({ title: title.trim(), content: content.trim() })
+      await api.post.createPost({
+        title: title.trim(),
+        content: content.trim(),
+        ...(imageUrl ? { image_url: imageUrl } : {}),
+      })
       setTitle('')
       setContent('')
+      setImageUrl('')
       await load()
     } catch (err) {
       Alert.alert('Error', errMsg(err))
@@ -112,6 +145,12 @@ export default function PostsScreen() {
           onChangeText={setContent}
           multiline
         />
+        {!!imageUrl && <Image source={{ uri: imageUrl }} style={styles.preview} />}
+        <Pressable style={styles.imageButton} onPress={pickImage} disabled={uploading}>
+          <Text style={styles.imageButtonText}>
+            {uploading ? 'Uploading…' : imageUrl ? 'Replace image' : 'Add image'}
+          </Text>
+        </Pressable>
         <Pressable style={styles.addButton} onPress={createPost} disabled={creating}>
           {creating ? (
             <ActivityIndicator color="#fff" />
@@ -134,6 +173,9 @@ export default function PostsScreen() {
               <Text style={styles.cardContent} numberOfLines={2}>
                 {item.content}
               </Text>
+            )}
+            {!!item.image_url && (
+              <Image source={{ uri: item.image_url }} style={styles.cardImage} />
             )}
             <Text style={styles.cardMeta}>@{item.user?.username ?? 'unknown'}</Text>
           </Pressable>
@@ -171,6 +213,27 @@ const styles = StyleSheet.create({
   multiline: {
     minHeight: 60,
     textAlignVertical: 'top',
+  },
+  imageButton: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  imageButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  preview: {
+    width: '100%',
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  cardImage: {
+    width: '100%',
+    height: 160,
+    borderRadius: 8,
+    marginTop: 8,
   },
   addButton: {
     backgroundColor: colors.primary,

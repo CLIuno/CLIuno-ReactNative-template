@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  Image,
   Alert,
   Pressable,
   RefreshControl,
@@ -37,6 +38,7 @@ interface Post {
   id: string | number
   title: string
   content?: string | null
+  image_url?: string | null
   user?: PostUser | null
 }
 
@@ -202,6 +204,9 @@ export default function PostDetailScreen() {
           <View>
             <Text style={styles.title}>{post.title}</Text>
             {!!post.content && <Text style={styles.body}>{post.content}</Text>}
+            {!!post.image_url && (
+              <Image source={{ uri: post.image_url }} style={styles.postImage} />
+            )}
             <Pressable onPress={() => post.user && router.push(`/users/${String(post.user.id)}`)}>
               <Text style={styles.meta}>@{post.user?.username ?? 'unknown'}</Text>
             </Pressable>
@@ -281,6 +286,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginTop: 12,
   },
   body: {
     fontSize: 15,

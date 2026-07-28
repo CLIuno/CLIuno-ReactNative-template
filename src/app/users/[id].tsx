@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  Image,
   Alert,
   Pressable,
   RefreshControl,
@@ -25,6 +26,7 @@ const colors = {
 }
 
 interface UserRecord {
+  avatar_url?: string | null
   id: string | number
   username: string
   email?: string
@@ -120,9 +122,13 @@ export default function UserDetailScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.card}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user.username?.[0]?.toUpperCase() ?? '?'}</Text>
-        </View>
+        {user.avatar_url ? (
+          <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{user.username?.[0]?.toUpperCase() ?? '?'}</Text>
+          </View>
+        )}
         <Text style={styles.name}>{fullName || `@${user.username}`}</Text>
         <Text style={styles.username}>@{user.username}</Text>
         {!!user.email && <Text style={styles.detail}>{user.email}</Text>}
