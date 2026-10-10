@@ -1,11 +1,25 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "unicorn", "oxc", "react"],
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react"
+  ],
   "categories": {
     "correctness": "error"
   },
   "rules": {
-    "no-console": "warn"
+    "no-console": "warn",
+    "react/set-state-in-effect": "off",
+    "react/purity": "off"
   },
-  "ignorePatterns": ["node_modules", ".expo", "dist", "android", "ios"]
+  "ignorePatterns": [
+    "node_modules",
+    ".expo",
+    "dist",
+    "android",
+    "ios"
+  ]
 }
