@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearAuth: async () => {
-    await AsyncStorage.removeMany(['token', 'refreshToken'])
+    await AsyncStorage.multiRemove(['token', 'refreshToken'])
     set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
   },
 

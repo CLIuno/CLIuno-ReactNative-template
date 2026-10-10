@@ -23,7 +23,7 @@ http.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Screens react to the cleared session via the auth store.
-      await AsyncStorage.removeMany(['token', 'refreshToken'])
+      await AsyncStorage.multiRemove(['token', 'refreshToken'])
     }
     return Promise.reject(error)
   },
